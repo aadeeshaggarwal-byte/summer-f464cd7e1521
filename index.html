@@ -83,6 +83,9 @@
   .chip.active{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy);}
   .chip .dot{width:11px;height:11px;border-radius:3px;flex:none;}
 
+  .share-hint{max-width:1640px;margin:10px auto 0;padding:9px 14px;background:#FBF3E2;border:1px solid #E8D9B5;border-radius:8px;color:#6B5A2E;font-size:12.5px;}
+  .share-hint strong{color:#5A4A22;}
+
   /* ---------- Calendar ---------- */
   .calendar{
     max-width:1640px;margin:14px auto 0;
@@ -261,12 +264,16 @@
 
   <span class="spacer"></span>
 
-  <button class="btn" id="copyLinkBtn">🔗 Copy link</button>
+  <button class="btn" id="copyLinkBtn" title="Copy a link to your current plan — send it to share, or to send your edits back">🔗 Copy link</button>
   <button class="btn ghost" id="exportBtn">Export</button>
   <button class="btn ghost" id="importBtn">Import</button>
   <button class="btn ghost" id="printBtn">Print</button>
   <button class="btn ghost" id="clearBtn">Clear plan</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" />
+</div>
+
+<div class="share-hint" id="shareHint" style="display:none">
+  💡 You can edit this plan right here — change any dates, then click <strong>🔗 Copy link</strong> (top-right) to send your updated version back, or share it onward.
 </div>
 
 <div class="calendar">
@@ -787,6 +794,7 @@
     }else{ window.prompt("Copy this link:", url); }
   });
   if(location.protocol.indexOf("http")!==0){ $("copyLinkBtn").style.display="none"; }
+  else { var _sh=$("shareHint"); if(_sh) _sh.style.display=""; }
   $("exportBtn").addEventListener("click",function(){
     var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
     var a=document.createElement("a");

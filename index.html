@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Summer Holiday Planner</title>
+<style>
+  :root{
+    --bg:#F6F5F1;
+    --panel:#FFFFFF;
+    --ink:#22262E;
+    --muted:#7C7A73;
+    --line:#E6E3DB;
+    --line-strong:#D6D2C7;
+    --navy:#1C2B46;
+    --brass:#B08D57;
+    --weekend:#FBFAF6;
+    --today:#FCF6E9;
+    --gutter:132px;
+    --lane-h:19px;
+    --lane-gap:4px;
+    --radius:7px;
+    --shadow:0 1px 2px rgba(28,43,70,.06), 0 8px 24px rgba(28,43,70,.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:0 24px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  .app-header{
+    max-width:1640px;margin:0 auto;
+    padding:14px 4px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  .app-header h1{
+    font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    font-weight:600;font-size:20px;letter-spacing:.2px;margin:0;
+    color:var(--navy);
+  }
+  .app-header h1 .accent{color:var(--brass);}
+  .app-header p{margin:5px 0 0;color:var(--muted);font-size:13px;}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    max-width:1640px;margin:0 auto;
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;
+    padding:8px 4px;
+  }
+  .tgroup{display:flex;align-items:center;gap:8px;}
+  .tgroup .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .toolbar input[type=date],
+  .toolbar input[type=number]{
+    font:inherit;padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);
+  }
+  .toolbar input[type=number]{width:64px;}
+  .btn{
+    font:inherit;cursor:pointer;border:1px solid var(--line-strong);background:#fff;color:var(--ink);
+    padding:7px 13px;border-radius:6px;transition:background .12s,border-color .12s;white-space:nowrap;
+  }
+  .btn:hover{background:#FAF8F3;border-color:var(--brass);}
+  .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .btn.primary:hover{background:#16223a;}
+  .btn.ghost{border-color:transparent;color:var(--muted);}
+  .btn.ghost:hover{color:var(--ink);background:#F0EEE8;}
+  .spacer{flex:1 1 auto;}
+
+  /* ---------- Legend ---------- */
+  .legend{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+  .legend .lbl{margin-right:2px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    padding:4px 10px 4px 8px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;font-size:12px;color:var(--ink);transition:border-color .12s,box-shadow .12s;
+  }
+  .chip:hover{border-color:var(--line-strong);}
+  .chip.active{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy);}
+  .chip .dot{width:11px;height:11px;border-radius:3px;flex:none;}
+
+  /* ---------- Calendar ---------- */
+  .calendar{
+    max-width:1640px;margin:14px auto 0;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .cal-scroll{overflow-x:auto;}
+  .cal-inner{min-width:1000px;}
+
+  .cal-head{
+    display:grid;grid-template-columns:var(--gutter) 1fr;
+    position:sticky;top:0;z-index:20;background:var(--panel);
+    border-bottom:1px solid var(--line-strong);
+  }
+  .cal-head .corner{
+    padding:6px 12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border-right:1px solid var(--line);display:flex;align-items:center;
+  }
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);}
+  .dow div{
+    padding:6px 11px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+    border-left:1px solid var(--line);
+  }
+  .dow div.we{color:var(--brass);}
+
+  .week{
+    display:grid;grid-template-columns:var(--gutter) 1fr;
+    border-bottom:1px solid var(--line-strong);
+  }
+  .week:last-child{border-bottom:none;}
+
+  .week-label{
+    padding:7px 12px;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;gap:2px;background:#FCFBF8;
+  }
+  .week-label .wk{font-weight:600;color:var(--navy);font-size:13px;}
+  .week-label .rng{color:var(--muted);font-size:12px;}
+  .week-label .cnt{margin-top:auto;color:var(--muted);font-size:11px;}
+
+  .week-main{display:flex;flex-direction:column;}
+
+  /* band track */
+  .band-track{
+    position:relative;width:100%;
+    padding:4px 0;min-height:24px;
+    border-bottom:1px dashed var(--line);
+    cursor:crosshair;user-select:none;touch-action:none;
+  }
+  .band-track .hint{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#BDBAB0;font-size:11px;font-style:italic;pointer-events:none;
+  }
+  .band{
+    position:absolute;height:var(--lane-h);
+    display:flex;align-items:center;gap:5px;
+    padding:0 7px;border-radius:4px;cursor:pointer;overflow:hidden;
+    font-size:10.5px;font-weight:600;white-space:nowrap;
+    box-shadow:0 1px 1px rgba(0,0,0,.12);
+    transition:filter .1s;
+  }
+  .band:hover{filter:brightness(1.04) saturate(1.05);}
+  .band .txt{overflow:hidden;text-overflow:ellipsis;}
+  .band.seg-mid{border-radius:0;}
+  .band.seg-start{border-top-right-radius:0;border-bottom-right-radius:0;}
+  .band.seg-end{border-top-left-radius:0;border-bottom-left-radius:0;}
+  .band.ghost{opacity:.55;pointer-events:none;outline:1px dashed rgba(255,255,255,.7);}
+
+  /* days */
+  .days{display:grid;grid-template-columns:repeat(7,1fr);}
+  .day{
+    border-left:1px solid var(--line);min-height:58px;
+    display:flex;flex-direction:column;
+  }
+  .day.we{background:var(--weekend);}
+  .day.today{background:var(--today);box-shadow:inset 0 2px 0 var(--brass);}
+  .day.outside{background:#FAFAF7;}
+  .day.outside .day-head,.day.outside textarea{opacity:.38;}
+  .nolessons{margin-left:auto;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:#6E6A61;opacity:.9;white-space:nowrap;cursor:pointer;}
+  .nolessons:hover{opacity:1;text-decoration:underline;}
+  .day-head{
+    display:flex;align-items:baseline;gap:6px;padding:3px 8px 1px;
+  }
+  .day-head .num{font-weight:600;font-size:12px;color:var(--ink);}
+  .day-head .mon{font-size:11px;color:var(--muted);}
+  .day.today .num{color:var(--brass);}
+  .day textarea{
+    flex:1 1 auto;width:100%;border:none;outline:none;resize:none;background:transparent;
+    font:inherit;font-size:12px;line-height:1.35;color:var(--ink);
+    padding:1px 8px 6px;min-height:32px;overflow:hidden;
+  }
+  .day textarea::placeholder{color:#CBC8BF;}
+  .day textarea:focus{background:rgba(176,141,87,.06);}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(28,43,70,.34);z-index:100;
+    display:none;align-items:flex-start;justify-content:center;padding:8vh 16px;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:#fff;border-radius:12px;width:420px;max-width:100%;
+    box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden;
+  }
+  .modal h2{
+    font-family:Georgia,serif;font-size:18px;margin:0;padding:18px 22px;
+    color:var(--navy);border-bottom:1px solid var(--line);
+  }
+  .modal .body{padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+  .field input[type=text],
+  .field input[type=date]{
+    font:inherit;padding:9px 10px;border:1px solid var(--line-strong);border-radius:7px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px;}
+  .swatch{
+    width:30px;height:30px;border-radius:7px;cursor:pointer;border:2px solid transparent;
+    box-shadow:0 0 0 1px var(--line) inset;
+  }
+  .swatch.sel{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy);}
+  .swatch.custom{display:flex;align-items:center;justify-content:center;background:#fff;color:var(--muted);font-size:15px;}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden;align-self:flex-start;}
+  .seg-btn{font:inherit;cursor:pointer;border:none;background:#fff;color:var(--muted);padding:8px 14px;}
+  .seg-btn+.seg-btn{border-left:1px solid var(--line-strong);}
+  .seg-btn.on{background:var(--navy);color:#fff;}
+  .modal .foot{
+    padding:14px 22px;border-top:1px solid var(--line);
+    display:flex;gap:10px;align-items:center;
+  }
+  .modal .foot .spacer{flex:1;}
+
+  footer.note{
+    max-width:1640px;margin:18px auto 0;color:var(--muted);font-size:12px;padding:0 4px;
+  }
+  footer.note kbd{
+    background:#fff;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;
+    padding:1px 6px;font-size:11px;
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff;padding:0;}
+    .toolbar,.app-header p,footer.note{display:none;}
+    .calendar{box-shadow:none;border:1px solid #999;}
+    .cal-head{position:static;}
+    .week{break-inside:avoid;}
+    .band,.day.we,.day.today,.week-label{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Summer Holiday Planner <span class="accent">·</span> July &amp; August</h1>
+  <p id="subtitle">Each week is a row across the holidays. Block out days with a colour for trips, courses and plans, and jot the details underneath. Everything saves automatically.</p>
+</header>
+
+<div class="toolbar">
+  <div class="tgroup">
+    <span class="lbl">From</span>
+    <input type="date" id="fromDate" />
+  </div>
+  <div class="tgroup">
+    <span class="lbl">To</span>
+    <input type="date" id="toDate" />
+  </div>
+  <button class="btn" id="applyBtn">Apply</button>
+
+  <button class="btn primary" id="addColourBtn">＋ Colour block</button>
+  <button class="btn" id="addBlockBtn">＋ Block dates</button>
+
+  <div class="legend" id="legend">
+    <span class="lbl">Quick colour:</span>
+  </div>
+
+  <span class="spacer"></span>
+
+  <button class="btn" id="copyLinkBtn">🔗 Copy link</button>
+  <button class="btn ghost" id="exportBtn">Export</button>
+  <button class="btn ghost" id="importBtn">Import</button>
+  <button class="btn ghost" id="printBtn">Print</button>
+  <button class="btn ghost" id="clearBtn">Clear plan</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none" />
+</div>
+
+<div class="calendar">
+  <div class="cal-scroll">
+    <div class="cal-inner">
+      <div class="cal-head">
+        <div class="corner">Week</div>
+        <div class="dow" id="dow"></div>
+      </div>
+      <div id="weekGrid"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="note">
+  Everything saves automatically in this browser. Add things with <kbd>＋ Colour block</kbd> or <kbd>＋ Block dates</kbd> (or <strong>drag</strong> across the dashed band above a week).
+  To change something: <strong>click a colour bar</strong> to edit its dates/colour, or <strong>click a “No lessons” label</strong> to edit a blocked range. Type details into the day boxes underneath.
+</footer>
+
+<!-- Event modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add period</h2>
+    <div class="body">
+      <div class="field">
+        <label>Type</label>
+        <div class="seg" id="typeSeg">
+          <button type="button" class="seg-btn on" data-type="event">Colour block</button>
+          <button type="button" class="seg-btn" data-type="fill">No-lesson days</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="evLabel">Label</label>
+        <input type="text" id="evLabel" placeholder="e.g. Holiday in Italy / Festival / No lessons" autocomplete="off" />
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="evStart">From</label>
+          <input type="date" id="evStart" />
+        </div>
+        <div class="field">
+          <label for="evEnd">To</label>
+          <input type="date" id="evEnd" />
+        </div>
+      </div>
+      <div class="field" id="colourField">
+        <label>Colour</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" id="deleteBtn" style="color:#B23A30;display:none;">Delete</button>
+      <span class="spacer"></span>
+      <button class="btn" id="cancelBtn">Cancel</button>
+      <button class="btn primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- constants ----------
+  var STORE_KEY = "summer-timetable-v1";
+  var DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var DEFAULT_CATS = [
+    {label:"Holiday",  color:"#C0603A"},
+    {label:"Trip",     color:"#2F7D8C"},
+    {label:"Study",    color:"#6C8EBF"},
+    {label:"Sport",    color:"#5B8C5A"},
+    {label:"Friends",  color:"#C28B2B"},
+    {label:"Other",    color:"#8A6DA8"}
+  ];
+  var DEFAULT_EVENTS = [];
+  var DEFAULT_NOTES = {};
+  var DEFAULT_FILLS = [];
+  var DEFAULT_CONFIG = { fromDate:"2026-07-01", toDate:"2026-08-31" };
+  // Signature of everything baked into this file. When the plan here changes, this
+  // string changes too — load() then treats any previously-saved browser data as
+  // stale and re-seeds from the file, so an updated copy always shows the latest plan
+  // instead of old localStorage from a previous version.
+  var SEED_SIG = JSON.stringify([DEFAULT_CONFIG, DEFAULT_CATS, DEFAULT_EVENTS, DEFAULT_NOTES, DEFAULT_FILLS]);
+
+  // ---------- date helpers (local, no TZ surprises) ----------
+  function pad(n){ return (n<10?"0":"")+n; }
+  function fmt(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function parse(s){ var p=s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function addDays(d,n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); }
+  function mondayOf(d){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); var w=(x.getDay()+6)%7; return addDays(x,-w); }
+  function dayLabel(d){ return d.getDate()+" "+MON[d.getMonth()]; }
+  function weekRange(start){
+    var end=addDays(start,6);
+    if(start.getMonth()===end.getMonth()) return start.getDate()+"–"+end.getDate()+" "+MON[start.getMonth()];
+    return start.getDate()+" "+MON[start.getMonth()]+" – "+end.getDate()+" "+MON[end.getMonth()];
+  }
+  var TODAY_KEY = fmt(new Date());
+
+  // contrast for band text
+  function textOn(hex){
+    var h=hex.replace("#",""); if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}
+    var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+    var L=(0.299*r+0.587*g+0.114*b)/255;
+    return L>0.62 ? "#22262E" : "#FFFFFF";
+  }
+
+  // ---------- state ----------
+  var state;
+  function defaults(){
+    return {
+      config:Object.assign({}, DEFAULT_CONFIG),
+      seedSig:SEED_SIG,
+      notes:Object.assign({}, DEFAULT_NOTES),
+      events:DEFAULT_EVENTS.map(function(e){return Object.assign({},e);}),
+      fills:DEFAULT_FILLS.map(function(f){return Object.assign({},f);}),
+      categories:DEFAULT_CATS.slice(),
+      activeColor:DEFAULT_CATS[0].color
+    };
+  }
+  function applySaved(s){
+    var st=defaults();
+    if(s.config) st.config=Object.assign(st.config,s.config);
+    if(s.notes) st.notes=s.notes;
+    if(Array.isArray(s.events)) st.events=s.events;
+    if(Array.isArray(s.fills)) st.fills=s.fills;
+    if(Array.isArray(s.categories)&&s.categories.length) st.categories=s.categories;
+    if(s.activeColor) st.activeColor=s.activeColor;
+    return st;
+  }
+  // ---- shareable link: the whole plan rides inside the URL (#p=...), never on the server ----
+  function shareable(){
+    return {config:state.config, notes:state.notes, events:state.events, fills:state.fills, categories:state.categories, activeColor:state.activeColor};
+  }
+  function encodePlan(o){ try{ return btoa(unescape(encodeURIComponent(JSON.stringify(o)))); }catch(e){ return ""; } }
+  function decodePlan(b){ try{ return JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){ return null; } }
+  function planFromHash(){ var m=(location.hash||"").match(/[#&]p=([^&]+)/); return m?decodePlan(m[1]):null; }
+  function shareUrl(){ return location.origin+location.pathname+location.search+"#p="+encodePlan(shareable()); }
+  function updateHash(){ if(location.protocol.indexOf("http")!==0) return; try{ history.replaceState(null,"","#p="+encodePlan(shareable())); }catch(e){} }
+
+  function load(){
+    try{
+      var hp=planFromHash();
+      if(hp){ state=applySaved(hp); save(); return; }   // a shared link wins — load the plan it carries
+      var raw=localStorage.getItem(STORE_KEY);
+      if(!raw){ state=defaults(); return; }
+      var s=JSON.parse(raw);
+      if(s.seedSig!==SEED_SIG){ state=defaults(); save(); return; }
+      state=applySaved(s);
+    }catch(e){ state=defaults(); }
+  }
+  var saveTimer=null;
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(function(){
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+      updateHash();
+    },120);
+  }
+  function genId(){ return "e"+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
+
+  // ---------- DOM refs ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var weeksEl=$("weekGrid"), dowEl=$("dow");
+  var fromInput=$("fromDate"), toInput=$("toDate");
+
+  // ---------- rendering ----------
+  function buildWeeks(){
+    var start=mondayOf(parse(state.config.fromDate));
+    var to=parse(state.config.toDate);
+    var out=[], cur=start, guard=0;
+    while(cur<=to && guard<60){ out.push(cur); cur=addDays(cur,7); guard++; }
+    if(out.length===0) out.push(start);
+    return out;
+  }
+
+  function eventsInWeek(weekStart){
+    var ws=weekStart, we=addDays(weekStart,6);
+    var wsK=fmt(ws), weK=fmt(we);
+    var segs=[];
+    state.events.forEach(function(ev){
+      if(ev.end<wsK || ev.start>weK) return; // no overlap (string compare on YYYY-MM-DD works)
+      var s=ev.start>wsK?ev.start:wsK;
+      var e=ev.end<weK?ev.end:weK;
+      var sIdx=Math.round((parse(s)-ws)/864e5);
+      var eIdx=Math.round((parse(e)-ws)/864e5);
+      segs.push({ev:ev, startIdx:sIdx, endIdx:eIdx, trueStart:(s===ev.start), trueEnd:(e===ev.end)});
+    });
+    return segs;
+  }
+
+  // greedy lane assignment; returns lane count
+  function assignLanes(segs){
+    segs.sort(function(a,b){ return a.startIdx-b.startIdx || a.endIdx-b.endIdx; });
+    var laneEnds=[];
+    segs.forEach(function(s){
+      for(var l=0;l<laneEnds.length;l++){
+        if(s.startIdx>laneEnds[l]){ s.lane=l; laneEnds[l]=s.endIdx; return; }
+      }
+      s.lane=laneEnds.length; laneEnds.push(s.endIdx);
+    });
+    return laneEnds.length;
+  }
+
+  function autosize(ta){ ta.style.height="auto"; ta.style.height=Math.max(30, ta.scrollHeight)+"px"; }
+
+  function fillFor(key){
+    for(var i=0;i<state.fills.length;i++){
+      var f=state.fills[i];
+      if(key>=f.start && key<=f.end) return f;
+    }
+    return null;
+  }
+
+  function render(){
+    // header dow
+    dowEl.innerHTML="";
+    DOW.forEach(function(d,i){
+      var el=document.createElement("div");
+      el.textContent=d; if(i>=5) el.className="we";
+      dowEl.appendChild(el);
+    });
+
+    weeksEl.innerHTML="";
+    var weeks=buildWeeks();
+    var fromKey=state.config.fromDate, toKey=state.config.toDate;
+    weeks.forEach(function(ws,wi){
+      var segs=eventsInWeek(ws);
+      var lanes=assignLanes(segs);
+      var rowH=Math.max(1,lanes)*(19+4)+8;
+
+      var week=document.createElement("div"); week.className="week";
+
+      // label
+      var label=document.createElement("div"); label.className="week-label";
+      var cnt=segs.length;
+      label.innerHTML='<span class="wk">Week '+(wi+1)+'</span><span class="rng">'+weekRange(ws)+'</span>'+
+        '<span class="cnt">'+(cnt? cnt+(cnt>1?" markings":" marking") : "")+'</span>';
+      week.appendChild(label);
+
+      var main=document.createElement("div"); main.className="week-main";
+
+      // band track
+      var track=document.createElement("div"); track.className="band-track";
+      track.style.minHeight=rowH+"px";
+      track.dataset.weekStart=fmt(ws);
+      if(segs.length===0){
+        var hint=document.createElement("div"); hint.className="hint";
+        hint.textContent="drag across days to block out a holiday, study, friends…";
+        track.appendChild(hint);
+      }
+      segs.forEach(function(s){
+        var b=document.createElement("div");
+        var seg = s.trueStart&&s.trueEnd ? "" : (s.trueStart?"seg-start":(s.trueEnd?"seg-end":"seg-mid"));
+        b.className="band "+seg;
+        b.style.left=(s.startIdx/7*100)+"%";
+        b.style.width=((s.endIdx-s.startIdx+1)/7*100)+"%";
+        b.style.top=(5 + s.lane*(19+4))+"px";
+        b.style.background=s.ev.color;
+        b.style.color=textOn(s.ev.color);
+        b.innerHTML='<span class="txt">'+escapeHtml(s.ev.label||"Untitled")+'</span>';
+        b.dataset.id=s.ev.id;
+        b.addEventListener("click",function(e){ e.stopPropagation(); openEditEvent(s.ev.id); });
+        track.appendChild(b);
+      });
+      attachDrag(track, ws);
+      main.appendChild(track);
+
+      // days
+      var days=document.createElement("div"); days.className="days";
+      for(var i=0;i<7;i++){
+        var d=addDays(ws,i), key=fmt(d);
+        var cell=document.createElement("div");
+        var outside=(key<fromKey||key>toKey);
+        var fill=fillFor(key);
+        cell.className="day"+(i>=5?" we":"")+(key===TODAY_KEY?" today":"")+(outside?" outside":"")+(fill?" filled":"");
+        if(fill){ cell.style.background=fill.color; }
+        var head=document.createElement("div"); head.className="day-head";
+        head.innerHTML='<span class="num">'+d.getDate()+'</span><span class="mon">'+MON[d.getMonth()]+'</span>';
+        if(fill){
+          var nl=document.createElement("span"); nl.className="nolessons"; nl.textContent=fill.label;
+          nl.title="Click to edit or remove these blocked dates"; nl.dataset.fillId=fill.id;
+          nl.addEventListener("click",function(ev){ ev.stopPropagation(); openEditFill(this.dataset.fillId); });
+          head.appendChild(nl);
+        }
+        cell.appendChild(head);
+        var ta=document.createElement("textarea");
+        ta.placeholder=fill?"":"…";
+        ta.value=state.notes[key]||"";
+        ta.dataset.key=key;
+        ta.addEventListener("input",function(){
+          var k=this.dataset.key;
+          if(this.value) state.notes[k]=this.value; else delete state.notes[k];
+          autosize(this); save();
+        });
+        cell.appendChild(ta);
+        days.appendChild(cell);
+      }
+      main.appendChild(days);
+      week.appendChild(main);
+      weeksEl.appendChild(week);
+
+      // autosize after attach
+      days.querySelectorAll("textarea").forEach(autosize);
+    });
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  // ---------- drag to create ----------
+  var drag=null;
+  function idxFromX(x,rect){ return Math.max(0,Math.min(6, Math.floor((x-rect.left)/rect.width*7))); }
+  function attachDrag(track, weekStart){
+    track.addEventListener("pointerdown",function(e){
+      if(e.target.closest(".band")) return; // clicking a band edits
+      e.preventDefault();
+      var rect=track.getBoundingClientRect();
+      var i=idxFromX(e.clientX,rect);
+      var ghost=document.createElement("div");
+      ghost.className="band ghost";
+      ghost.style.background=state.activeColor;
+      ghost.style.top="5px";
+      track.appendChild(ghost);
+      drag={track:track, rect:rect, weekStart:weekStart, a:i, b:i, ghost:ghost};
+      paintGhost();
+      track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener("pointermove",function(e){
+      if(!drag||drag.track!==track) return;
+      drag.b=idxFromX(e.clientX,drag.rect);
+      paintGhost();
+    });
+    track.addEventListener("pointerup",function(e){
+      if(!drag||drag.track!==track) return;
+      var lo=Math.min(drag.a,drag.b), hi=Math.max(drag.a,drag.b);
+      if(drag.ghost&&drag.ghost.parentNode) drag.ghost.parentNode.removeChild(drag.ghost);
+      var ws=drag.weekStart; drag=null;
+      openCreate(fmt(addDays(ws,lo)), fmt(addDays(ws,hi)));
+    });
+    track.addEventListener("pointercancel",function(){
+      if(drag&&drag.ghost&&drag.ghost.parentNode) drag.ghost.parentNode.removeChild(drag.ghost);
+      drag=null;
+    });
+  }
+  function paintGhost(){
+    var lo=Math.min(drag.a,drag.b), hi=Math.max(drag.a,drag.b);
+    drag.ghost.style.left=(lo/7*100)+"%";
+    drag.ghost.style.width=((hi-lo+1)/7*100)+"%";
+    drag.ghost.style.background=state.activeColor;
+  }
+
+  // ---------- modal ----------
+  var overlay=$("overlay"), modalTitle=$("modalTitle");
+  var evLabel=$("evLabel"), evStart=$("evStart"), evEnd=$("evEnd");
+  var swatchesEl=$("swatches"), deleteBtn=$("deleteBtn");
+  var typeSeg=$("typeSeg"), colourField=$("colourField");
+  var FILL_COLOR="#DAD6CC";
+  var editingId=null, editingKind=null, curType="event", chosenColor=null, customColorVal="#3A7CA5";
+
+  function renderSwatches(){
+    swatchesEl.innerHTML="";
+    state.categories.forEach(function(c){
+      var s=document.createElement("div");
+      s.className="swatch"+(c.color===chosenColor?" sel":"");
+      s.style.background=c.color; s.title=c.label;
+      s.addEventListener("click",function(){
+        chosenColor=c.color;
+        if(!evLabel.value) evLabel.value=c.label;
+        renderSwatches();
+      });
+      swatchesEl.appendChild(s);
+    });
+    // custom colour
+    var wrap=document.createElement("label");
+    wrap.className="swatch custom"; wrap.title="Custom colour"; wrap.textContent="＋";
+    var inp=document.createElement("input");
+    inp.type="color"; inp.value=customColorVal; inp.style.cssText="opacity:0;width:0;height:0;position:absolute;";
+    inp.addEventListener("input",function(){ customColorVal=this.value; chosenColor=this.value; wrap.style.background=this.value; wrap.textContent=""; renderSwatches(); });
+    wrap.appendChild(inp);
+    if(chosenColor && !state.categories.some(function(c){return c.color===chosenColor;})){
+      wrap.classList.add("sel"); wrap.style.background=chosenColor; wrap.textContent="";
+    }
+    swatchesEl.appendChild(wrap);
+  }
+
+  function openModal(){ overlay.classList.add("open"); setTimeout(function(){evLabel.focus();},30); }
+  function closeModal(){ overlay.classList.remove("open"); editingId=null; editingKind=null; }
+
+  function setToggleEnabled(on){
+    Array.prototype.forEach.call(typeSeg.querySelectorAll(".seg-btn"),function(b){
+      b.disabled=!on; b.style.opacity=on?"":"0.4"; b.style.cursor=on?"pointer":"default";
+    });
+  }
+  function renderType(){
+    Array.prototype.forEach.call(typeSeg.querySelectorAll(".seg-btn"),function(b){
+      b.classList.toggle("on", b.dataset.type===curType);
+    });
+    colourField.style.display=(curType==="fill")?"none":"";
+  }
+  Array.prototype.forEach.call(typeSeg.querySelectorAll(".seg-btn"),function(b){
+    b.addEventListener("click",function(){
+      if(this.disabled) return;
+      curType=this.dataset.type;
+      if(curType==="fill"){ if(!evLabel.value.trim()) evLabel.value="No lessons"; chosenColor=FILL_COLOR; }
+      else { if(evLabel.value.trim()==="No lessons") evLabel.value=""; chosenColor=state.activeColor; }
+      renderType(); renderSwatches();
+    });
+  });
+
+  function openCreate(startKey,endKey,kind){
+    editingId=null; editingKind=null; curType=kind||"event";
+    modalTitle.textContent=(curType==="fill")?"Block out dates":"Add colour block";
+    evLabel.value=(curType==="fill")?"No lessons":""; evStart.value=startKey; evEnd.value=endKey;
+    chosenColor=(curType==="fill")?FILL_COLOR:state.activeColor; deleteBtn.style.display="none";
+    setToggleEnabled(true); renderType(); renderSwatches(); openModal();
+  }
+  function openEditEvent(id){
+    var ev=state.events.filter(function(e){return e.id===id;})[0];
+    if(!ev) return;
+    editingId=id; editingKind="event"; curType="event"; modalTitle.textContent="Edit colour block";
+    evLabel.value=ev.label||""; evStart.value=ev.start; evEnd.value=ev.end;
+    chosenColor=ev.color; deleteBtn.style.display="inline-block";
+    setToggleEnabled(false); renderType(); renderSwatches(); openModal();
+  }
+  function openEditFill(id){
+    var f=state.fills.filter(function(x){return x.id===id;})[0];
+    if(!f) return;
+    editingId=id; editingKind="fill"; curType="fill"; modalTitle.textContent="Edit blocked dates";
+    evLabel.value=f.label||"No lessons"; evStart.value=f.start; evEnd.value=f.end;
+    chosenColor=FILL_COLOR; deleteBtn.style.display="inline-block";
+    setToggleEnabled(false); renderType(); renderSwatches(); openModal();
+  }
+  function saveModal(){
+    var s=evStart.value, e=evEnd.value;
+    if(!s||!e){ return; }
+    if(e<s){ var t=s; s=e; e=t; }
+    if(curType==="fill"){
+      var flabel=evLabel.value.trim()||"No lessons";
+      if(editingId){
+        state.fills.forEach(function(f){ if(f.id===editingId){ f.label=flabel; f.color=FILL_COLOR; f.start=s; f.end=e; } });
+      }else{
+        state.fills.push({id:genId(), label:flabel, color:FILL_COLOR, start:s, end:e});
+      }
+    }else{
+      var color=chosenColor||state.activeColor;
+      var label=evLabel.value.trim()||"Marked";
+      if(editingId){
+        state.events.forEach(function(ev){ if(ev.id===editingId){ ev.label=label; ev.color=color; ev.start=s; ev.end=e; } });
+      }else{
+        state.events.push({id:genId(), label:label, color:color, start:s, end:e});
+      }
+      state.activeColor=color;
+    }
+    save(); closeModal(); renderLegend(); render();
+  }
+  function deleteItem(){
+    if(!editingId) return;
+    if(editingKind==="fill"){
+      state.fills=state.fills.filter(function(f){return f.id!==editingId;});
+    }else{
+      state.events=state.events.filter(function(ev){return ev.id!==editingId;});
+    }
+    save(); closeModal(); render();
+  }
+
+  $("saveBtn").addEventListener("click",saveModal);
+  $("cancelBtn").addEventListener("click",closeModal);
+  $("deleteBtn").addEventListener("click",deleteItem);
+  overlay.addEventListener("click",function(e){ if(e.target===overlay) closeModal(); });
+  document.addEventListener("keydown",function(e){
+    if(!overlay.classList.contains("open")) return;
+    if(e.key==="Escape") closeModal();
+    if(e.key==="Enter" && document.activeElement!==evLabel) saveModal();
+  });
+  evLabel.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); saveModal(); } });
+
+  // ---------- legend ----------
+  function renderLegend(){
+    var leg=$("legend");
+    leg.querySelectorAll(".chip").forEach(function(n){n.remove();});
+    state.categories.forEach(function(c){
+      var chip=document.createElement("span");
+      chip.className="chip"+(c.color===state.activeColor?" active":"");
+      chip.innerHTML='<span class="dot" style="background:'+c.color+'"></span>'+escapeHtml(c.label);
+      chip.addEventListener("click",function(){ state.activeColor=c.color; save(); renderLegend(); });
+      leg.appendChild(chip);
+    });
+  }
+
+  // ---------- toolbar actions ----------
+  $("applyBtn").addEventListener("click",function(){
+    var f=fromInput.value||state.config.fromDate;
+    var t=toInput.value||state.config.toDate;
+    if(t<f){ var tmp=f; f=t; t=tmp; }
+    state.config.fromDate=f; state.config.toDate=t;
+    syncInputs(); save(); render();
+  });
+  $("addColourBtn").addEventListener("click",function(){
+    var f=parse(state.config.fromDate);
+    openCreate(fmt(f), fmt(addDays(f,2)), "event");
+  });
+  $("addBlockBtn").addEventListener("click",function(){
+    var f=parse(state.config.fromDate);
+    openCreate(fmt(f), fmt(addDays(f,2)), "fill");
+  });
+  $("printBtn").addEventListener("click",function(){ window.print(); });
+  $("clearBtn").addEventListener("click",function(){
+    if(confirm("Clear all day notes and colour markings? Your date range and colours stay.")){
+      state.notes={}; state.events=[]; state.fills=[]; save(); render();
+    }
+  });
+  $("copyLinkBtn").addEventListener("click",function(){
+    var url=shareUrl(), btn=this, orig=btn.textContent;
+    function done(){ btn.textContent="✓ Link copied"; setTimeout(function(){btn.textContent=orig;},1600); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(done,function(){ window.prompt("Copy this link:", url); });
+    }else{ window.prompt("Copy this link:", url); }
+  });
+  if(location.protocol.indexOf("http")!==0){ $("copyLinkBtn").style.display="none"; }
+  $("exportBtn").addEventListener("click",function(){
+    var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="summer-timetable.json"; a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  });
+  $("importBtn").addEventListener("click",function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change",function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var s=JSON.parse(r.result);
+        state=applySaved(s);
+        syncInputs(); save(); renderLegend(); render();
+      }catch(err){ alert("Could not read that file."); }
+    };
+    r.readAsText(f);
+    e.target.value="";
+  });
+
+  function syncInputs(){
+    fromInput.value=state.config.fromDate;
+    toInput.value=state.config.toDate;
+  }
+
+  // ---------- init ----------
+  load();
+  syncInputs();
+  renderLegend();
+  render();
+})();
+</script>
+</body>
+</html>

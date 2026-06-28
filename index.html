@@ -347,7 +347,7 @@
     {label:"Trip",     color:"#2F7D8C"},
     {label:"Study",    color:"#6C8EBF"},
     {label:"Sport",    color:"#5B8C5A"},
-    {label:"Friends",  color:"#C28B2B"},
+    {label:"Friends",  color:"#C56B8A"},
     {label:"Other",    color:"#8A6DA8"}
   ];
   var DEFAULT_EVENTS = [];
@@ -788,10 +788,20 @@
   });
   $("copyLinkBtn").addEventListener("click",function(){
     var url=shareUrl(), btn=this, orig=btn.textContent;
-    function done(){ btn.textContent="✓ Link copied"; setTimeout(function(){btn.textContent=orig;},1600); }
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(done,function(){ window.prompt("Copy this link:", url); });
-    }else{ window.prompt("Copy this link:", url); }
+    var text=(document.title||"Summer Holiday Planner");
+    function done(){ btn.textContent="✓ Copied — paste into your email"; setTimeout(function(){btn.textContent=orig;},2400); }
+    function fallback(){ window.prompt("Copy this link:", url); }
+    function plain(){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done,fallback); } else { fallback(); } }
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        var html='<a href="'+url+'">'+text+'</a>';
+        var item=new window.ClipboardItem({
+          "text/html": new Blob([html],{type:"text/html"}),
+          "text/plain": new Blob([url],{type:"text/plain"})
+        });
+        navigator.clipboard.write([item]).then(done, plain);
+      } else { plain(); }
+    }catch(e){ plain(); }
   });
   if(location.protocol.indexOf("http")!==0){ $("copyLinkBtn").style.display="none"; }
   else { var _sh=$("shareHint"); if(_sh) _sh.style.display=""; }

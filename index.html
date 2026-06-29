@@ -833,10 +833,24 @@
   }
 
   // ---------- init ----------
-  load();
-  syncInputs();
-  renderLegend();
-  render();
+  function boot(){ load(); syncInputs(); renderLegend(); render(); }
+  // Short links: "#g=<id>" loads the plan from a GitHub gist (reliable, CORS-enabled).
+  var _gm=(location.hash||"").match(/[#&]g=([0-9a-zA-Z]+)/);
+  if(_gm){
+    boot(); // render something immediately while we fetch
+    fetch("https://api.github.com/gists/"+_gm[1])
+      .then(function(r){ if(!r.ok) throw new Error("gist "+r.status); return r.json(); })
+      .then(function(g){
+        var k=Object.keys(g.files)[0];
+        var plan=JSON.parse(g.files[k].content);
+        state=applySaved(plan);
+        try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+        syncInputs(); renderLegend(); render();
+      })
+      .catch(function(){ /* gist unavailable — keep whatever already loaded */ });
+  } else {
+    boot();
+  }
 })();
 </script>
 </body>
